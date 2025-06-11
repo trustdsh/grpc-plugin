@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/trustdsh/grpc-plugin/examples/base/shared";
+
+service Plugin {
+    rpc DoSomething(Empty) returns (Empty) {}
+    rpc GetSomething(GetSomethingRequest) returns (GetSomethingResponse) {}
+}
+
+message GetSomethingRequest {
+    string name = 1;
+}
+
+message GetSomethingResponse {
+    string message = 1;
+}
+
+message Empty {}

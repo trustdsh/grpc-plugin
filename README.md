@@ -74,3 +74,8 @@ func main() {
 	}
 }
 ```
+
+### Environment Variables
+
+GRPC_PLUGINS_ALLOW_RELATIVE_PATHS_DOUBLE_DOT - set to true to enable plugins with a `..` in their path
+ 

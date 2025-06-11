@@ -1,0 +1,3 @@
+plugins:
+  - path: ../plugin
+    kind: build_and_run
