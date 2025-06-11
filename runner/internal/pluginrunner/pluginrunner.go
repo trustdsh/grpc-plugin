@@ -78,10 +78,15 @@ func buildAndRunPlugin[T any](ctx context.Context, pluginConfig config.ManifestP
 	for {
 		select {
 		case <-startCtx.Done():
-			if err := cmd.Process.Kill(); err != nil {
+			if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM); err != nil {
 				logger.Error("failed to kill plugin process after timeout", "error", err)
 			}
 			return nil, errors.Wrapf(startCtx.Err(), "plugin %s failed to start within %v", pluginConfig.GetName(), startupTimeout)
+		case <-ctx.Done():
+			if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM); err != nil {
+				logger.Error("failed to kill plugin process after context cancellation", "error", err)
+			}
+			return nil, errors.Wrap(ctx.Err(), "context cancelled while waiting for plugin to start")
 		default:
 			conn, err := net.DialTimeout("tcp", net.JoinHostPort("localhost", strconv.Itoa(options.Port)), time.Second)
 			if err == nil {
@@ -119,11 +124,11 @@ func (options *PluginServerOptions) ToCliOptions() ([]string, error) {
 		opts = append(opts, "-plugin_name", options.PluginName)
 	}
 	if options.LoggerOptions != nil {
-		options, err := options.LoggerOptions.MarshalJSON()
+		loggerOptsJSON, err := options.LoggerOptions.MarshalJSON()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to marshal logger options")
 		}
-		opts = append(opts, "-logger_options", string(options))
+		opts = append(opts, "-logger_options", string(loggerOptsJSON))
 	}
 	return opts, nil
 }
@@ -225,7 +230,7 @@ func LoadPlugin[T any](ctx context.Context, pluginConfig config.ManifestPlugin, 
 	pluginClient, err := createPluginClient(pluginServer, pluginConfig, cfg, transportGenerator)
 	if err != nil {
 		logger.Error("failed to create plugin client", "error", err)
-		if closeErr := pluginServer.Process.Kill(); closeErr != nil {
+		if closeErr := syscall.Kill(-pluginServer.Process.Pid, syscall.SIGTERM); closeErr != nil {
 			logger.Error("failed to kill plugin process after client creation error", "error", closeErr)
 		}
 		return nil, errors.Wrapf(err, "failed to create client for plugin %s", pluginConfig.GetName())

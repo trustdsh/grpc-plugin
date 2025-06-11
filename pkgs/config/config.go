@@ -35,7 +35,14 @@ func (l *LoggerOptions) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
 	}
-	l.Type = tmp["type"].(string)
+	typeRaw, ok := tmp["type"]
+	if !ok {
+		return errors.New("missing required field: type")
+	}
+	l.Type, ok = typeRaw.(string)
+	if !ok {
+		return errors.Errorf("type field must be a string, got %T", typeRaw)
+	}
 	levelRaw, ok := tmp["level"]
 	if ok {
 		levelFloat, ok := levelRaw.(float64)

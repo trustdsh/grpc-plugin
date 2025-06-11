@@ -45,7 +45,7 @@ func GeneratePrivateCA() (*PrivateCA, error) {
 			Organization: []string{"GRPC_Plugins"},
 		},
 		NotBefore:             time.Now().Add(-time.Second),
-		NotAfter:              time.Now().AddDate(1, 0, 0), // Valid for 1 year
+		NotAfter:              time.Now().AddDate(certValidityYears, 0, 0), // Valid for certValidityYears
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
@@ -91,8 +91,8 @@ func (k *KeyAndCert) GetTLSConfig() (*tls.Config, error) {
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: false,
-		MinVersion:         tls.VersionTLS12,
-		MaxVersion:         tls.VersionTLS12,
+		MinVersion:         tls.VersionTLS13,
+		MaxVersion:         tls.VersionTLS13,
 		ClientAuth:         tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{
 			{
@@ -190,7 +190,14 @@ func DeserializeKeyAndCert(data []byte) (*KeyAndCert, error) {
 	return k, nil
 }
 
-func GenerateKeyAndCertFromCA(ca *PrivateCA, subject string, role string) (*KeyAndCert, error) {
+type Role string
+
+const (
+	RoleServer Role = "server"
+	RoleClient Role = "client"
+)
+
+func GenerateKeyAndCertFromCA(ca *PrivateCA, subject string, role Role) (*KeyAndCert, error) {
 	logger := slog.Default().With("component", "transport", "subject", subject, "role", role)
 	logger.Debug("generating key and cert from CA")
 

@@ -36,9 +36,14 @@ func NewTransportGenerator(cfg *config.TLSConfig) (*TransportGenerator, error) {
 	return t, nil
 }
 
-func (t *TransportGenerator) GenerateKeyAndCert(subject string, role string /*server or client*/) (*KeyAndCert, error) {
+func (t *TransportGenerator) GenerateKeyAndCert(subject string, role Role) (*KeyAndCert, error) {
 	logger := slog.Default().With("component", "transport_generator", "subject", subject, "role", role)
 	logger.Debug("generating key and cert")
+
+	// Validate role parameter
+	if role != RoleServer && role != RoleClient {
+		return nil, errors.Errorf("invalid role: %s, must be %s or %s", role, RoleServer, RoleClient)
+	}
 
 	keyAndCert, err := GenerateKeyAndCertFromCA(t.ca, subject, role)
 	if err != nil {

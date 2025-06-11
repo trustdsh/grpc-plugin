@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	minPort     = 40000
-	maxPort     = 50000
-	maxAttempts = 10
+	minPort = 40000
+	maxPort = 50000
+	// Try the whole range once before failing.
+	maxAttempts = maxPort - minPort + 1
 )
 
 type PortManager struct {
@@ -33,7 +34,7 @@ func (pm *PortManager) GetPort() (int, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
-	for attempt := 0; attempt < maxAttempts; attempt++ {
+	for range maxAttempts {
 		// Try next port in sequence
 		pm.lastAssigned++
 		if pm.lastAssigned > maxPort {

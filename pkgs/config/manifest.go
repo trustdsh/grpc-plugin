@@ -115,9 +115,9 @@ func (c *ManifestConfig) Validate() error {
 }
 
 type Manifest struct {
-	Kind   string          // can be "file" or "config"
+	Kind   string          // can be "file" or "inline"
 	Path   string          // if kind is "file", this is the path to the file
-	Config *ManifestConfig // if kind is "config", this is the config for the plugin
+	Config *ManifestConfig // if kind is "inline", this is the config for the plugin
 }
 
 func (m *Manifest) Validate() error {

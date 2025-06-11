@@ -13,7 +13,7 @@ import (
 
 // LoadAll loads all plugins defined in the configuration
 func LoadAll[T any](ctx context.Context, cfg config.Config[T]) (*LoadedPlugins[T], error) {
-	logger := slog.With("component", "plugins_loader")
+	logger := slog.Default().With("component", "plugins_loader")
 	logger.Debug("starting plugins loading")
 
 	pluginConfig, err := config.LoadManifest(&cfg)

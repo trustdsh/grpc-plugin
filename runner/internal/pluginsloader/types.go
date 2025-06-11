@@ -22,17 +22,21 @@ type LoadedPlugins[T any] struct {
 
 // Close shuts down all loaded plugins and releases their resources
 func (l *LoadedPlugins[T]) Close() error {
+	// Snapshot and clear under lock
 	l.mu.Lock()
-	defer l.mu.Unlock()
+	pluginsCopy := make(map[string]*pluginrunner.LoadedPlugin[T], len(l.pluginsMap))
+	for k, v := range l.pluginsMap {
+		pluginsCopy[k] = v
+	}
+	l.mu.Unlock()
 
 	l.logger.Debug("closing all plugins")
 	var lastErr error
-	for name, plugin := range l.pluginsMap {
+	for name, plugin := range pluginsCopy {
 		pluginLogger := l.logger.With("plugin", name)
 		pluginLogger.Debug("closing plugin")
 
-		err := plugin.Close()
-		if err != nil {
+		if err := plugin.Close(); err != nil {
 			pluginLogger.Error("failed to close plugin", "error", err)
 			lastErr = err
 		}
